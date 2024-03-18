@@ -14,6 +14,6 @@ It will collect system stats and usage stats of all running swarm services and w
 
 **Volume Bind**
 - bind **&lt;host docker socket path&gt;** to -> **/var/run/docker.sock**
-
+- bind /etc/hostname to /app/etc/hostname (read only)
 ### License
 Apache License 2.0

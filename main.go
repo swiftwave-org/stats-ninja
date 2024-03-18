@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -18,6 +19,9 @@ func main() {
 	* DOCKER_HOST: unix or tcp socket to connect to
 	* This will send the stats to the endpoint using the authorization header
 	*
+	* Configure Volume Mounts
+	* <docker socket of host>:/var/run/docker.sock
+	* /etc/hostname:/app/etc/hostname:ro
 	 */
 	submissionEndpoint := os.Getenv("SUBMISSION_ENDPOINT")
 	authorizationHeaderVal := os.Getenv("AUTHORIZATION_HEADER_VAL")
@@ -35,6 +39,12 @@ func main() {
 		log.Println("Error creating docker client:")
 		panic(err)
 	}
+	// fetch hostname
+	hostname, err := getHostName()
+	if err != nil {
+		log.Println("Error fetching hostname: ")
+		panic(err)
+	}
 	for {
 		<-time.After(1 * time.Minute)
 		// fetch stats
@@ -43,6 +53,8 @@ func main() {
 			log.Println("Error fetching stats: ", err)
 			continue
 		}
+		// set hostname
+		statsData.Hostname = hostname
 		// convert to json
 		jsonData, err := statsData.JSON()
 		if err != nil {
@@ -58,7 +70,7 @@ func main() {
 	}
 }
 
-// private function to send stats to the endpoint
+// private functions
 func sendStats(submissionEndpoint string, authorizationHeaderVal string, jsonData []byte) error {
 	// convert jsonData to a reader
 	body := bytes.NewReader(jsonData)
@@ -81,4 +93,23 @@ func sendStats(submissionEndpoint string, authorizationHeaderVal string, jsonDat
 		_ = Body.Close()
 	}(resp.Body)
 	return nil
+}
+
+func getHostName() (string, error) {
+	fileName := "/app/etc/hostname"
+	file, err := os.Open(fileName)
+	if err != nil {
+		return "", err
+	}
+	defer func(file *os.File) {
+		_ = file.Close()
+	}(file)
+	buf := make([]byte, 1000)
+	n, err := file.Read(buf)
+	if err != nil {
+		return "", err
+	}
+	h := string(buf[:n])
+	h = strings.TrimSpace(h)
+	return h, nil
 }
