@@ -7,7 +7,6 @@ import (
 )
 
 type StatsData struct {
-	Hostname     string                            `json:"hostname"`
 	SystemStat   host.ResourceStats                `json:"system"`
 	ServiceStats map[string]*service.ResourceStats `json:"services"`
 	TimeStamp    uint64                            `json:"timestamp"`
