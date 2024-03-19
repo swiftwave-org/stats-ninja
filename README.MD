@@ -11,9 +11,9 @@ It will collect system stats and usage stats of all running swarm services and w
 - SUBMISSION_ENDPOINT: The endpoint to submit the stats to
 - AUTHORIZATION_HEADER_VAL (optional): The value of the authorization header
 - DOCKER_HOST: unix or tcp socket to connect to
+- HOSTNAME: The hostname of the server (not the container)
 
 **Volume Bind**
-- bind **&lt;host docker socket path&gt;** to -> **/var/run/docker.sock**
-- bind /etc/hostname to /app/etc/hostname (read only)
+- bind **&lt;host docker socket path&gt;** to -> **provided path in env DOCKER_HOST**
 ### License
 Apache License 2.0

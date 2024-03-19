@@ -2,14 +2,14 @@ package main
 
 import (
 	"bytes"
-	"github.com/docker/docker/client"
-	"github.com/swiftwave-org/stats_ninja/host"
 	"io"
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
+
+	"github.com/docker/docker/client"
+	"github.com/swiftwave-org/stats_ninja/host"
 )
 
 func main() {
@@ -17,14 +17,15 @@ func main() {
 	* SUBMISSION_ENDPOINT: The endpoint to submit the stats to
 	* AUTHORIZATION_HEADER_VAL: The value of the authorization header
 	* DOCKER_HOST: unix or tcp socket to connect to
+	* HOSTNAME: The hostname of the host
 	* This will send the stats to the endpoint using the authorization header
 	*
 	* Configure Volume Mounts
 	* <docker socket of host>:/var/run/docker.sock
-	* /etc/hostname:/app/etc/hostname:ro
 	 */
 	submissionEndpoint := os.Getenv("SUBMISSION_ENDPOINT")
 	authorizationHeaderVal := os.Getenv("AUTHORIZATION_HEADER_VAL")
+	hostname := os.Getenv("HOSTNAME")
 	// reject if the submission endpoint is not set
 	if submissionEndpoint == "" {
 		panic("SUBMISSION_ENDPOINT is not set")
@@ -32,17 +33,15 @@ func main() {
 	if os.Getenv("DOCKER_HOST") == "" {
 		panic("DOCKER_HOST is not set")
 	}
+	// if hostname is not set, fetch it from the system
+	if hostname == "" {
+		panic("HOSTNAME is not set")
+	}
 	_, _ = host.Stats() // intentionally called. just to initialize current network stats
 	// create a new docker client
 	dockerClient, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		log.Println("Error creating docker client:")
-		panic(err)
-	}
-	// fetch hostname
-	hostname, err := getHostName()
-	if err != nil {
-		log.Println("Error fetching hostname: ")
 		panic(err)
 	}
 	for {
@@ -93,23 +92,4 @@ func sendStats(submissionEndpoint string, authorizationHeaderVal string, jsonDat
 		_ = Body.Close()
 	}(resp.Body)
 	return nil
-}
-
-func getHostName() (string, error) {
-	fileName := "/app/etc/hostname"
-	file, err := os.Open(fileName)
-	if err != nil {
-		return "", err
-	}
-	defer func(file *os.File) {
-		_ = file.Close()
-	}(file)
-	buf := make([]byte, 1000)
-	n, err := file.Read(buf)
-	if err != nil {
-		return "", err
-	}
-	h := string(buf[:n])
-	h = strings.TrimSpace(h)
-	return h, nil
 }
