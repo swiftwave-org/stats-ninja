@@ -11,7 +11,7 @@ jobs:
         name: Release Swiftwave Binary
         runs-on: ubuntu-latest
         strategy:
-        matrix:
+          matrix:
             goos: [linux]
             goarch: ["386", amd64, arm64]
         steps:
