@@ -5,14 +5,5 @@ It will collect system stats and usage stats of all running swarm services and w
 
 > This program will not expose any API for polling, it will send its stats directly to swiftwave management server
 
-### Configuration
-
-**Environment Variables**
-- SUBMISSION_ENDPOINT: The endpoint to submit the stats to
-- AUTHORIZATION_HEADER_VAL (optional): The value of the authorization header
-- DOCKER_HOST: unix or tcp socket to connect to
-
-**Volume Bind**
-- bind **&lt;host docker socket path&gt;** to -> **provided path in env DOCKER_HOST**
 ### License
 Apache License 2.0

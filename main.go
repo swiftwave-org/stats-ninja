@@ -2,35 +2,128 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/docker/docker/client"
 	"github.com/swiftwave-org/stats_ninja/host"
 )
 
+var serviceName = "stats_ninja"
+
+var serviceTemplate = `
+[Unit]
+Description=Stats Ninja
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/stats_ninja run {{.Endpoint}} {{.Auth}}
+Restart=on-failure
+RestartSec=10
+KillMode=process
+User=root
+
+[Install]
+WantedBy=multi-user.target
+`
+
 func main() {
-	/* Configure the environment variables
-	* SUBMISSION_ENDPOINT: The endpoint to submit the stats to
-	* AUTHORIZATION_HEADER_VAL: The value of the authorization header
-	* DOCKER_HOST: unix or tcp socket to connect to
-	* This will send the stats to the endpoint using the authorization header
-	*
-	* Configure Volume Mounts
-	* <docker socket of host>:/var/run/docker.sock
-	 */
-	submissionEndpoint := os.Getenv("SUBMISSION_ENDPOINT")
-	authorizationHeaderVal := os.Getenv("AUTHORIZATION_HEADER_VAL")
-	// reject if the submission endpoint is not set
-	if submissionEndpoint == "" {
-		panic("SUBMISSION_ENDPOINT is not set")
+	// fetch first argument
+	args := os.Args[1:]
+	// run cmd
+	if len(args) > 0 && args[0] == "run" {
+		endpointFlag := ""
+		authFlag := ""
+		if len(args) > 2 {
+			endpointFlag = args[1]
+			authFlag = args[2]
+			run(endpointFlag, authFlag)
+		} else {
+			fmt.Println("Usage: stats_ninja run <submission_endpoint> <authorization_header_value>")
+		}
+
+	} else if len(args) > 0 && args[0] == "enable" {
+		// enable cmd
+		endpointFlag := ""
+		authFlag := ""
+		if len(args) > 2 {
+			endpointFlag = args[1]
+			authFlag = args[2]
+			enable(endpointFlag, authFlag)
+		} else {
+			fmt.Println("Usage: stats_ninja run <submission_endpoint> <authorization_header_value>")
+		}
+	} else if len(args) > 0 && args[0] == "disable" {
+		// disable cmd
+		disable()
+	} else {
+		fmt.Println("Usage: stats_ninja <run|enable|disable>")
+		os.Exit(1)
 	}
-	if os.Getenv("DOCKER_HOST") == "" {
-		panic("DOCKER_HOST is not set")
+}
+
+func enable(submissionEndpoint, authorizationHeaderVal string) {
+	// update template
+	service := serviceTemplate
+	service = strings.Replace(service, "{{.Endpoint}}", submissionEndpoint, -1)
+	service = strings.Replace(service, "{{.Auth}}", authorizationHeaderVal, -1)
+	// write to file
+	file, err := os.Create(fmt.Sprintf("/etc/systemd/system/%s.service", serviceName))
+	if err != nil {
+		log.Println("Error creating service file: ", err)
+		return
 	}
+	defer file.Close()
+	_, err = file.WriteString(service)
+	if err != nil {
+		log.Println("Error writing to service file: ", err)
+		return
+	}
+	// reload systemd
+	err = exec.Command("systemctl", "daemon-reload").Run()
+	if err != nil {
+		log.Println("Error reloading systemd: ", err)
+		return
+	}
+	// enable service
+	err = exec.Command("systemctl", "enable", serviceName).Run()
+	if err != nil {
+		log.Println("Error enabling service: ", err)
+		return
+	}
+	// start service
+	err = exec.Command("systemctl", "start", serviceName).Run()
+	if err != nil {
+		log.Println("Error starting service: ", err)
+		return
+	}
+	log.Println("Service enabled successfully")
+}
+
+func disable() {
+	// stop service
+	err := exec.Command("systemctl", "stop", serviceName).Run()
+	if err != nil {
+		log.Println("Error stopping service: ", err)
+		return
+	}
+	// disable service
+	err = exec.Command("systemctl", "disable", serviceName).Run()
+	if err != nil {
+		log.Println("Error disabling service: ", err)
+		return
+	}
+	log.Println("Service disabled successfully")
+}
+
+func run(submissionEndpoint, authorizationHeaderVal string) {
 	_, _ = host.Stats() // intentionally called. just to initialize current network stats
 	// create a new docker client
 	dockerClient, err := client.NewClientWithOpts(client.FromEnv)
@@ -39,7 +132,8 @@ func main() {
 		panic(err)
 	}
 	for {
-		<-time.After(1 * time.Minute)
+		<-time.After(10 * time.Second)
+		fmt.Println("Fetching stats...")
 		// fetch stats
 		statsData, err := fetchStats(dockerClient)
 		if err != nil {
