@@ -15,7 +15,7 @@ import (
 	"github.com/swiftwave-org/stats_ninja/host"
 )
 
-var serviceName = "stats_ninja"
+var serviceName = "swiftwave_stats_ninja"
 
 var serviceTemplate = `
 [Unit]
@@ -24,7 +24,8 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/bin/stats_ninja run {{.Endpoint}} {{.Auth}}
+ExecStart=/bin/swiftwave_stats_ninja run
+Environment="SWIFTWAVE_STATS_NINJA_ENDPOINT={{.Endpoint}}" "SWIFTWAVE_STATS_NINJA_AUTH_TOKEN={{.AuthToken}}"
 Restart=on-failure
 RestartSec=10
 KillMode=process
@@ -35,30 +36,33 @@ WantedBy=multi-user.target
 `
 
 func main() {
+	// must run as root
+	if os.Geteuid() != 0 {
+		fmt.Println("This program must be run as root")
+		os.Exit(1)
+	}
 	// fetch first argument
 	args := os.Args[1:]
 	// run cmd
 	if len(args) > 0 && args[0] == "run" {
-		endpointFlag := ""
-		authFlag := ""
-		if len(args) > 2 {
-			endpointFlag = args[1]
-			authFlag = args[2]
-			run(endpointFlag, authFlag)
-		} else {
-			fmt.Println("Usage: stats_ninja run <submission_endpoint> <authorization_header_value>")
+		endpointFlag := os.Getenv("SWIFTWAVE_STATS_NINJA_ENDPOINT")
+		authToken := os.Getenv("SWIFTWAVE_STATS_NINJA_AUTH_TOKEN")
+		if endpointFlag == "" || authToken == "" {
+			fmt.Println("Provide SWIFTWAVE_STATS_NINJA_ENDPOINT and SWIFTWAVE_STATS_NINJA_AUTH as environment variables")
+			os.Exit(1)
 		}
-
+		// run the stats_ninja
+		run(endpointFlag, fmt.Sprintf("analytics_token %s", authToken))
 	} else if len(args) > 0 && args[0] == "enable" {
 		// enable cmd
 		endpointFlag := ""
-		authFlag := ""
+		authToken := ""
 		if len(args) > 2 {
 			endpointFlag = args[1]
-			authFlag = args[2]
-			enable(endpointFlag, authFlag)
+			authToken = args[2]
+			enable(endpointFlag, authToken)
 		} else {
-			fmt.Println("Usage: stats_ninja run <submission_endpoint> <authorization_header_value>")
+			fmt.Println("Usage: stats_ninja run <submission_endpoint> <auth_token>")
 		}
 	} else if len(args) > 0 && args[0] == "disable" {
 		// disable cmd
@@ -70,10 +74,12 @@ func main() {
 }
 
 func enable(submissionEndpoint, authorizationHeaderVal string) {
+	// do disable first
+	disable()
 	// update template
 	service := serviceTemplate
 	service = strings.Replace(service, "{{.Endpoint}}", submissionEndpoint, -1)
-	service = strings.Replace(service, "{{.Auth}}", authorizationHeaderVal, -1)
+	service = strings.Replace(service, "{{.AuthToken}}", authorizationHeaderVal, -1)
 	// write to file
 	file, err := os.Create(fmt.Sprintf("/etc/systemd/system/%s.service", serviceName))
 	if err != nil {
@@ -104,7 +110,7 @@ func enable(submissionEndpoint, authorizationHeaderVal string) {
 		log.Println("Error starting service: ", err)
 		return
 	}
-	log.Println("Service enabled successfully")
+	fmt.Println("Service enabled successfully")
 }
 
 func disable() {
@@ -120,7 +126,13 @@ func disable() {
 		log.Println("Error disabling service: ", err)
 		return
 	}
-	log.Println("Service disabled successfully")
+	// delete service file
+	err = os.Remove(fmt.Sprintf("/etc/systemd/system/%s.service", serviceName))
+	if err != nil {
+		log.Println("Error deleting service file: ", err)
+		return
+	}
+	fmt.Println("Service disabled successfully")
 }
 
 func run(submissionEndpoint, authorizationHeaderVal string) {
@@ -168,6 +180,9 @@ func sendStats(submissionEndpoint string, authorizationHeaderVal string, jsonDat
 	if authorizationHeaderVal != "" {
 		req.Header.Set("Authorization", authorizationHeaderVal)
 	}
+	fmt.Println("Sending stats to endpoint...")
+	fmt.Println("Endpoint: ", submissionEndpoint)
+	fmt.Println("Authorization: ", authorizationHeaderVal)
 	// send the request
 	httpClient := &http.Client{}
 	resp, err := httpClient.Do(req)

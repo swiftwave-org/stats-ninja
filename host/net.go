@@ -2,7 +2,6 @@ package host
 
 import (
 	"errors"
-	"math"
 
 	"github.com/shirou/gopsutil/net"
 )
@@ -53,7 +52,7 @@ func netStats() (*NetStat, error) {
 		bytesRecv = 0
 	}
 	return &NetStat{
-		SentKB: uint64(math.Round(float64(bytesSent) / 1024)),
-		RecvKB: uint64(math.Round(float64(bytesRecv) / 1024)),
+		SentKB: uint64(bytesSent / 1024),
+		RecvKB: uint64(bytesRecv / 1024),
 	}, nil
 }
