@@ -69,6 +69,8 @@ func sendStats(submissionEndpoint string, authorizationHeaderVal string, jsonDat
 	if err != nil {
 		return err
 	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
 	// set the authorization header
 	if authorizationHeaderVal != "" {
 		req.Header.Set("Authorization", authorizationHeaderVal)
