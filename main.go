@@ -132,8 +132,7 @@ func run(submissionEndpoint, authorizationHeaderVal string) {
 		panic(err)
 	}
 	for {
-		<-time.After(10 * time.Second)
-		fmt.Println("Fetching stats...")
+		<-time.After(1 * time.Minute)
 		// fetch stats
 		statsData, err := fetchStats(dockerClient)
 		if err != nil {

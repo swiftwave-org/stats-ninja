@@ -20,6 +20,8 @@ func diskStats() ([]DiskStat, error) {
 			continue
 		} else if strings.HasPrefix(value.Mountpoint, "/var/lib/docker") {
 			continue
+		} else if strings.HasPrefix(value.Mountpoint, "/var/snap/") {
+			continue
 		}
 		usageVal, err := disk.Usage(value.Mountpoint)
 		if err != nil {
