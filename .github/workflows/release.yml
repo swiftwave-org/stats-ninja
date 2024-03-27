@@ -88,11 +88,12 @@ jobs:
         - name: Print Build Info
           run: |
             deb_build_files=($(ls ~/deb_builds/*.deb))
-            echo "deb_build_files=${deb_build_files[@]}" >> $GITHUB_ENV
-            for i in ~/deb_builds/*.deb; do
-              echo "Built: $i"
-              dpkg --info $i
+            deb_files_list=""
+            for file in "${deb_build_files[@]}"; do
+                deb_files_list+="$(echo -e "$file\n")"
             done
+            echo -e "deb_build_files=${deb_files_list}" >> $GITHUB_ENV
+            echo "Built: $deb_files_list"
         - name: Release
           uses: softprops/action-gh-release@v2
           with:
