@@ -87,6 +87,8 @@ jobs:
             done
         - name: Print Build Info
           run: |
+            deb_build_files=($(ls ~/deb_builds/*.deb))
+            echo "deb_build_files=${deb_build_files[@]}" >> $GITHUB_ENV
             for i in ~/deb_builds/*.deb; do
               echo "Built: $i"
               dpkg --info $i
@@ -94,7 +96,7 @@ jobs:
         - name: Release
           uses: softprops/action-gh-release@v2
           with:
-            files: ~/deb_builds/*.deb
+            files: ${{ env.deb_build_files }}
             tag_name: ${{ env.release_tag }}
     rpm-packager:
         name: Package and Release RPM Binary
