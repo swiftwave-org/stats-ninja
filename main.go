@@ -63,7 +63,7 @@ func main() {
 			authToken = args[2]
 			enable(endpointFlag, authToken)
 		} else {
-			fmt.Println("Usage: stats_ninja run <submission_endpoint> <auth_token>")
+			fmt.Println("Usage: swiftwave-stats-ninja run <submission_endpoint> <auth_token>")
 		}
 	} else if len(args) > 0 && args[0] == "disable" {
 		// disable cmd
