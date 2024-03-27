@@ -51,7 +51,7 @@ env:
   asset_builder_download_link: https://github.com/wangyoucao577/assets-uploader/releases/download/v0.13.0/github-assets-uploader-v0.13.0-linux-amd64.tar.gz
 jobs:
     debian-packager:
-        name: Package and Release Debian Binary (APT)
+        name: Package Debian Binary
         runs-on: ubuntu-latest
         steps:
         - name: Setup Environment
@@ -70,7 +70,7 @@ jobs:
             go-version: 1.22.1
         - name: Create Directory to dump .deb
           run: mkdir -p ~/deb_builds
-        - name: Build for all debian_architectures
+        - name: Build for all architectures
           run: |
             architectures=(${debian_architectures//,/ })
             go_archs=(${go_archs//,/ })
@@ -97,7 +97,7 @@ jobs:
               /usr/bin/github-assets-uploader -f $i -mediatype application/octet-stream -token $github_token -overwrite -repo $github_repository -tag $release_tag
             done
     rpm-packager:
-        name: Package and Release RPM Binary
+        name: Package RPM Binary
         runs-on: ubuntu-latest
         container: almalinux:latest
         steps:
@@ -141,7 +141,7 @@ jobs:
                 echo "Built: $i"
                 rpm -qip $i
               done
-          - name: Upload debian packages
+          - name: Upload RPM packages
             run: |
               for i in  ~/*.rpm; do
                 echo "Built: $i"
