@@ -61,7 +61,7 @@ jobs:
             release_number=$(echo "$release_tag" | cut -d'-' -f2)
             echo "release_version=${release_version}" >> $GITHUB_ENV
             echo "release_number=${release_number}" >> $GITHUB_ENV
-            wget -q -O - $asset_builder_download_link | tar -xz -C /usr/bin        
+            wget -q -O - $asset_builder_download_link | sudo tar -xz -C /usr/bin/
         - name: Checkout code
           uses: actions/checkout@v3
         - name: Setup Go
