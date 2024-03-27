@@ -53,10 +53,11 @@ jobs:
         steps:
         - name: Setup Environment
           run: |
-            IFS='-' read -ra version_parts <<< "${{ env.release_tag }}"
-            echo "release_version=${version_parts[0]}" >> $GITHUB_ENV
-            echo "release_number=${version_parts[1]}" >> $GITHUB_ENV
-            sudo apt update -y > /dev/null 2>&1 && apt install -y tree > /dev/null 2>&1
+            release_tag="${{ env.release_tag }}"
+            release_version=$(echo "$release_tag" | cut -d'-' -f1)
+            release_number=$(echo "$release_tag" | cut -d'-' -f2)
+            echo "release_version=${release_version}" >> $GITHUB_ENV
+            echo "release_number=${release_number}" >> $GITHUB_ENV
         - name: Checkout code
           uses: actions/checkout@v3
         - name: Setup Go
