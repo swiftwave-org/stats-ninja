@@ -13,6 +13,7 @@ import (
 
 	"github.com/docker/docker/client"
 	"github.com/swiftwave-org/stats_ninja/host"
+	"github.com/swiftwave-org/stats_ninja/service"
 )
 
 var serviceName = "swiftwave_stats_ninja"
@@ -136,15 +137,16 @@ func disable() {
 }
 
 func run(submissionEndpoint, authorizationHeaderVal string) {
-	_, _ = host.Stats() // intentionally called. just to initialize current network stats
 	// create a new docker client
 	dockerClient, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		log.Println("Error creating docker client:")
 		panic(err)
 	}
+	_, _ = host.Stats()                // intentionally called. just to initialize current network stats
+	_, _ = service.Stats(dockerClient) // intentionally called. just to initialize current service net stats
 	for {
-		<-time.After(1 * time.Minute)
+		<-time.After(10 * time.Second)
 		// fetch stats
 		statsData, err := fetchStats(dockerClient)
 		if err != nil {

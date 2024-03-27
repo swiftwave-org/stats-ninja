@@ -3,12 +3,20 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"io"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
-	"io"
 )
+
+// store previous stats
+var serviceLastNetStats map[string]*NetStat
+
+func init() {
+	serviceLastNetStats = make(map[string]*NetStat)
+}
 
 func Stats(cl *client.Client) (*map[string]*ResourceStats, error) {
 	// map of service name to stats
@@ -62,11 +70,47 @@ func Stats(cl *client.Client) (*map[string]*ResourceStats, error) {
 		if err != nil {
 			continue
 		}
+
 		// save the stats
 		rs.CpuUsagePercent = rs.CpuUsagePercent + calculateCPUPercentUnix(statsJSON.PreCPUStats.CPUUsage.TotalUsage, statsJSON.PreCPUStats.SystemUsage, &statsJSON)
 		rs.UsedMemoryMB = rs.UsedMemoryMB + memoryUsageMB(&statsJSON)
 		rs.NetStat.SentKB = rs.NetStat.SentKB + networkSentKB(&statsJSON)
+		rs.NetStat.RecvKB = rs.NetStat.RecvKB + networkRecvKB(&statsJSON)
 	}
 
+	calculateNetStatDiffFromLastRecord(&statsMap)
+
 	return &statsMap, nil
+}
+
+func calculateNetStatDiffFromLastRecord(statsMap *map[string]*ResourceStats) {
+	statsMapRef := *statsMap
+
+	// iterate over the statsMap
+	for serviceName, stats := range statsMapRef {
+		// check if old stats exist
+		if _, ok := serviceLastNetStats[serviceName]; !ok {
+			// add this as the last stats
+			serviceLastNetStats[serviceName] = &NetStat{
+				SentKB: stats.NetStat.SentKB,
+				RecvKB: stats.NetStat.RecvKB,
+			}
+			// mark the current net stats as 0
+			statsMapRef[serviceName].NetStat.SentKB = 0
+			statsMapRef[serviceName].NetStat.RecvKB = 0
+		} else {
+			if stats.NetStat.SentKB < serviceLastNetStats[serviceName].SentKB {
+				statsMapRef[serviceName].NetStat.SentKB = 0
+			} else {
+				statsMapRef[serviceName].NetStat.SentKB = stats.NetStat.SentKB - serviceLastNetStats[serviceName].SentKB
+			}
+			if stats.NetStat.RecvKB < serviceLastNetStats[serviceName].RecvKB {
+				statsMapRef[serviceName].NetStat.RecvKB = 0
+			} else {
+				statsMapRef[serviceName].NetStat.RecvKB = stats.NetStat.RecvKB - serviceLastNetStats[serviceName].RecvKB
+			}
+			serviceLastNetStats[serviceName].SentKB = statsMapRef[serviceName].NetStat.SentKB
+			serviceLastNetStats[serviceName].RecvKB = statsMapRef[serviceName].NetStat.RecvKB
+		}
+	}
 }
