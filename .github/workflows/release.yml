@@ -92,7 +92,7 @@ jobs:
             for file in "${deb_build_files[@]}"; do
                 deb_files_list+="$(echo -e "$file\n")"
             done
-            echo -e "deb_build_files=${deb_files_list}" >> $GITHUB_ENV
+            echo "deb_build_files=${deb_files_list}" >> $GITHUB_ENV
             echo "Built: $deb_files_list"
         - name: Release
           uses: softprops/action-gh-release@v2
