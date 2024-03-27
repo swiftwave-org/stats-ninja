@@ -5,6 +5,8 @@ permissions:
   contents: write
   packages: write
 env:
+  github_token: ${{ secrets.GITHUB_TOKEN }}
+  github_repository: ${{ github.repository }}
   release_tag: ${{ github.event.release.tag_name }}
   package_name: swiftwave-stats-ninja
   homepage: https://swiftwave.org
@@ -45,7 +47,8 @@ env:
     /usr/bin/$PACKAGE_NAME
 
     %global __strip /bin/true
-
+  
+  asset_builder_download_link: https://github.com/wangyoucao577/assets-uploader/releases/download/v0.13.0/github-assets-uploader-v0.13.0-linux-amd64.tar.gz
 jobs:
     debian-packager:
         name: Package and Release Debian Binary (APT)
@@ -58,6 +61,7 @@ jobs:
             release_number=$(echo "$release_tag" | cut -d'-' -f2)
             echo "release_version=${release_version}" >> $GITHUB_ENV
             echo "release_number=${release_number}" >> $GITHUB_ENV
+            wget -q -O - $asset_builder_download_link | tar -xz -C /usr/bin        
         - name: Checkout code
           uses: actions/checkout@v3
         - name: Setup Go
@@ -85,20 +89,13 @@ jobs:
               echo "$control_content" > ~/deb_builds/${package_name}_${release_tag}_${architectures[$i]}/DEBIAN/control
               dpkg --build ~/deb_builds/${package_name}_${release_tag}_${architectures[$i]}
             done
-        - name: Print Build Info
+        - name: Upload .deb to GitHub
           run: |
-            deb_build_files=($(ls ~/deb_builds/*.deb))
-            deb_files_list=""
-            for file in "${deb_build_files[@]}"; do
-                deb_files_list+="$(echo -e "$file\n")"
+            for i in ~/deb_builds/*.deb; do
+              echo "Built: $i"
+              echo "Uploading $i"
+              /usr/bin/github-assets-uploader -f $i -mediatype application/octet-stream -token $github_token -overwrite -repo $github_repository -tag $release_tag
             done
-            echo "deb_build_files=${deb_files_list}" >> $GITHUB_ENV
-            echo "Built: $deb_files_list"
-        - name: Release
-          uses: softprops/action-gh-release@v2
-          with:
-            files: ${{ env.deb_build_files }}
-            tag_name: ${{ env.release_tag }}
     rpm-packager:
         name: Package and Release RPM Binary
         runs-on: ubuntu-latest
