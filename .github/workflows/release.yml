@@ -155,4 +155,4 @@ jobs:
         steps:
           - name: Setup environment
             run: |
-              curl --header 'Authorization: ${{ secrets.PACKAGE_REPO_TRIGGER_TOKEN }}' 'http://update.repo.swiftwave.org/?repo_name=${package_name}&release_tag=${release_tag}'
+              curl --header 'Authorization: ${{ secrets.PACKAGE_REPO_TRIGGER_TOKEN }}' "http://update.repo.swiftwave.org/?repo_name=${package_name}&release_tag=${release_tag}"
