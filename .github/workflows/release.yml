@@ -155,5 +155,5 @@ jobs:
         steps:
           - name: Setup environment
             run: |
-              TRIGGER_URL="http://update.repo.swiftwave.org/?repo_name=${package_name}&release_tag=${release_tag}"
+              TRIGGER_URL="http://update.repo.swiftwave.org/?repo_name=${github_repository}&release_tag=${release_tag}"
               curl --header 'Authorization: ${{ secrets.PACKAGE_REPO_TRIGGER_TOKEN }}' $TRIGGER_URL
