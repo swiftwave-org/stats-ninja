@@ -69,7 +69,7 @@ func main() {
 		// disable cmd
 		disable()
 	} else {
-		fmt.Println("Usage: stats_ninja <run|enable|disable>")
+		fmt.Println("Usage: swiftwave-stats-ninja <run|enable|disable>")
 		os.Exit(1)
 	}
 }
