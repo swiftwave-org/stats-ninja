@@ -25,7 +25,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/bin/swiftwave_stats_ninja run
+ExecStart=/usr/bin/swiftwave_stats_ninja run
 Environment="SWIFTWAVE_STATS_NINJA_ENDPOINT={{.Endpoint}}" "SWIFTWAVE_STATS_NINJA_AUTH_TOKEN={{.AuthToken}}"
 Restart=on-failure
 RestartSec=10
@@ -49,7 +49,7 @@ func main() {
 		endpointFlag := os.Getenv("SWIFTWAVE_STATS_NINJA_ENDPOINT")
 		authToken := os.Getenv("SWIFTWAVE_STATS_NINJA_AUTH_TOKEN")
 		if endpointFlag == "" || authToken == "" {
-			fmt.Println("Provide SWIFTWAVE_STATS_NINJA_ENDPOINT and SWIFTWAVE_STATS_NINJA_AUTH as environment variables")
+			fmt.Println("Provide SWIFTWAVE_STATS_NINJA_ENDPOINT and SWIFTWAVE_STATS_NINJA_AUTH_TOKEN as environment variables")
 			os.Exit(1)
 		}
 		// run the stats_ninja
@@ -63,7 +63,7 @@ func main() {
 			authToken = args[2]
 			enable(endpointFlag, authToken)
 		} else {
-			fmt.Println("Usage: swiftwave-stats-ninja run <submission_endpoint> <auth_token>")
+			fmt.Println("Usage: swiftwave-stats-ninja enable <submission_endpoint> <auth_token>")
 		}
 	} else if len(args) > 0 && args[0] == "disable" {
 		// disable cmd
