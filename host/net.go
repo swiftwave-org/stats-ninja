@@ -18,9 +18,9 @@ func netStats() (*NetStat, error) {
 	if err != nil {
 		return nil, err
 	}
-	IO := make(map[string][]int32)
+	IO := make(map[string][]uint64)
 	for _, IOStat := range netStats {
-		nic := []int32{int32(IOStat.BytesSent), int32(IOStat.BytesRecv)}
+		nic := []uint64{IOStat.BytesSent, IOStat.BytesRecv}
 		IO[IOStat.Name] = nic
 	}
 	if len(IO) == 0 {
@@ -33,8 +33,8 @@ func netStats() (*NetStat, error) {
 		return nil, errors.New("interface not found")
 	}
 	allNet := IO["all"]
-	currentBytesSent := uint64(allNet[0])
-	currentBytesRecv := uint64(allNet[1])
+	currentBytesSent := allNet[0]
+	currentBytesRecv := allNet[1]
 	bytesSent := currentBytesSent - lastCurrentBytesSent
 	bytesRecv := currentBytesRecv - lastCurrentBytesRecv
 	lastCurrentBytesSent = currentBytesSent
@@ -52,7 +52,7 @@ func netStats() (*NetStat, error) {
 		bytesRecv = 0
 	}
 	return &NetStat{
-		SentKB: uint64(bytesSent / 1024),
-		RecvKB: uint64(bytesRecv / 1024),
+		SentKB: bytesSent / 1024,
+		RecvKB: bytesRecv / 1024,
 	}, nil
 }
