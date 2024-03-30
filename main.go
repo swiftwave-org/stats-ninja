@@ -146,7 +146,7 @@ func run(submissionEndpoint, authorizationHeaderVal string) {
 	_, _ = host.Stats()                // intentionally called. just to initialize current network stats
 	_, _ = service.Stats(dockerClient) // intentionally called. just to initialize current service net stats
 	for {
-		<-time.After(10 * time.Second)
+		<-time.After(1 * time.Minute)
 		// fetch stats
 		statsData, err := fetchStats(dockerClient)
 		if err != nil {
