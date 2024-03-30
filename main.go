@@ -16,7 +16,7 @@ import (
 	"github.com/swiftwave-org/stats_ninja/service"
 )
 
-var serviceName = "swiftwave_stats_ninja"
+var serviceName = "swiftwave-stats-ninja"
 
 var serviceTemplate = `
 [Unit]
@@ -25,7 +25,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/swiftwave_stats_ninja run
+ExecStart=/usr/bin/swiftwave-stats-ninja run
 Environment="SWIFTWAVE_STATS_NINJA_ENDPOINT={{.Endpoint}}" "SWIFTWAVE_STATS_NINJA_AUTH_TOKEN={{.AuthToken}}"
 Restart=on-failure
 RestartSec=10
