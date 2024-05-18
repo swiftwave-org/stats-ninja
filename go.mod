@@ -3,7 +3,7 @@ module github.com/swiftwave-org/stats_ninja
 go 1.21.3
 
 require (
-	github.com/docker/docker v26.1.1+incompatible
+	github.com/docker/docker v26.1.3+incompatible
 	github.com/shirou/gopsutil v3.21.11+incompatible
 )
 
