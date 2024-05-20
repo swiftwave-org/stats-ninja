@@ -182,11 +182,12 @@ func sendStats(submissionEndpoint string, authorizationHeaderVal string, jsonDat
 	if authorizationHeaderVal != "" {
 		req.Header.Set("Authorization", authorizationHeaderVal)
 	}
-	fmt.Println(string(jsonData))
 	// send the request
 	httpClient := &http.Client{}
 	resp, err := httpClient.Do(req)
 	if err != nil {
+		fmt.Println("Error sending stats to endpoint: ", err.Error())
+		fmt.Println("data tried to be sent: ", string(jsonData))
 		return err
 	}
 	// close the response body
