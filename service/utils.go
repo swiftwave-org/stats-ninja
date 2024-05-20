@@ -49,11 +49,9 @@ func Stats(cl *client.Client) (*map[string]*ResourceStats, error) {
 		// create a new ResourceStats if it doesn't exist
 		if _, ok := statsMap[serviceName]; !ok {
 			statsMap[serviceName] = &ResourceStats{
-				CpuTime: &CpuTime{
-					Service: 0,
-					System:  0,
-				},
-				UsedMemoryMB: 0,
+				ServiceCpuTime: 0,
+				SystemCpuTime:  0,
+				UsedMemoryMB:   0,
 				NetStat: &NetStat{
 					SentKB: 0,
 					RecvKB: 0,
@@ -75,8 +73,8 @@ func Stats(cl *client.Client) (*map[string]*ResourceStats, error) {
 		}
 
 		// save the stats
-		rs.CpuTime.Service = rs.CpuTime.Service + uint64(statsJSON.CPUStats.CPUUsage.TotalUsage-statsJSON.PreCPUStats.CPUUsage.TotalUsage)
-		rs.CpuTime.System = uint64(statsJSON.CPUStats.SystemUsage-statsJSON.PreCPUStats.SystemUsage)
+		rs.ServiceCpuTime = rs.ServiceCpuTime + uint64(statsJSON.CPUStats.CPUUsage.TotalUsage-statsJSON.PreCPUStats.CPUUsage.TotalUsage)
+		rs.SystemCpuTime = uint64(statsJSON.CPUStats.SystemUsage - statsJSON.PreCPUStats.SystemUsage)
 		rs.UsedMemoryMB = rs.UsedMemoryMB + memoryUsageMB(&statsJSON)
 		rs.NetStat.SentKB = rs.NetStat.SentKB + networkSentKB(&statsJSON)
 		rs.NetStat.RecvKB = rs.NetStat.RecvKB + networkRecvKB(&statsJSON)
