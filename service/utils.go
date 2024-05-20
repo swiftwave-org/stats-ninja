@@ -72,7 +72,7 @@ func Stats(cl *client.Client) (*map[string]*ResourceStats, error) {
 		}
 
 		// save the stats
-		rs.CpuUsagePercent = rs.CpuUsagePercent + calculateCPUPercentUnix(statsJSON.PreCPUStats.CPUUsage.TotalUsage, statsJSON.PreCPUStats.SystemUsage, &statsJSON)
+		rs.CpuUsagePercent = rs.CpuUsagePercent + calculateCPUPercentUnix(&statsJSON)
 		rs.UsedMemoryMB = rs.UsedMemoryMB + memoryUsageMB(&statsJSON)
 		rs.NetStat.SentKB = rs.NetStat.SentKB + networkSentKB(&statsJSON)
 		rs.NetStat.RecvKB = rs.NetStat.RecvKB + networkRecvKB(&statsJSON)
