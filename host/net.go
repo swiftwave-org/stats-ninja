@@ -1,58 +1,47 @@
 package host
 
 import (
-	"errors"
-
 	"github.com/shirou/gopsutil/net"
 )
 
-var lastCurrentBytesSent uint64 = 0
-var lastCurrentBytesRecv uint64 = 0
+var lastCurrentKBytesSent uint64 = 0
+var lastCurrentKBytesRecv uint64 = 0
 
 func netStats() (*NetStat, error) {
 	isPastStatFound := true
-	if lastCurrentBytesSent == 0 && lastCurrentBytesRecv == 0 {
+	if lastCurrentKBytesSent == 0 && lastCurrentKBytesRecv == 0 {
 		isPastStatFound = false
 	}
 	netStats, err := net.IOCounters(false)
 	if err != nil {
 		return nil, err
 	}
-	IO := make(map[string][]uint64)
-	for _, IOStat := range netStats {
-		nic := []uint64{IOStat.BytesSent, IOStat.BytesRecv}
-		IO[IOStat.Name] = nic
-	}
-	if len(IO) == 0 {
+	if len(netStats) == 0 {
 		return &NetStat{
 			SentKB: 0,
 			RecvKB: 0,
 		}, nil
 	}
-	if _, ok := IO["all"]; !ok {
-		return nil, errors.New("interface not found")
+	currentKBytesSent := uint64(netStats[0].BytesSent / 1024)
+	currentKBytesRecv := uint64(netStats[0].BytesRecv / 1024)
+	kiloBytesSentDiff := uint64(0)
+	kiloBytesRecvDiff := uint64(0)
+	if currentKBytesSent > lastCurrentKBytesSent {
+		kiloBytesSentDiff = currentKBytesSent - lastCurrentKBytesSent
 	}
-	allNet := IO["all"]
-	currentBytesSent := allNet[0]
-	currentBytesRecv := allNet[1]
-	bytesSent := currentBytesSent - lastCurrentBytesSent
-	bytesRecv := currentBytesRecv - lastCurrentBytesRecv
-	lastCurrentBytesSent = currentBytesSent
-	lastCurrentBytesRecv = currentBytesRecv
+	if currentKBytesRecv > lastCurrentKBytesRecv {
+		kiloBytesRecvDiff = currentKBytesRecv - lastCurrentKBytesRecv
+	}
+	lastCurrentKBytesSent = currentKBytesSent
+	lastCurrentKBytesRecv = currentKBytesRecv
 	if !isPastStatFound {
 		return &NetStat{
-			SentKB: 0,
-			RecvKB: 0,
+			SentKB: uint64(0),
+			RecvKB: uint64(0),
 		}, nil
 	}
-	if bytesSent <= 0 {
-		bytesSent = 0
-	}
-	if bytesRecv <= 0 {
-		bytesRecv = 0
-	}
 	return &NetStat{
-		SentKB: bytesSent / 1024,
-		RecvKB: bytesRecv / 1024,
+		SentKB: kiloBytesSentDiff,
+		RecvKB: kiloBytesRecvDiff,
 	}, nil
 }
