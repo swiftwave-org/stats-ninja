@@ -23,7 +23,7 @@ func netStats() (*NetStat, error) {
 		}, nil
 	}
 	currentKBytesSent := uint64(netStats[0].BytesSent / 1024)
-	currentKBytesRecv := uint64(netStats[1].BytesRecv / 1024)
+	currentKBytesRecv := uint64(netStats[0].BytesRecv / 1024)
 	kiloBytesSentDiff := uint64(0)
 	kiloBytesRecvDiff := uint64(0)
 	if currentKBytesSent > lastCurrentKBytesSent {
