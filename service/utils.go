@@ -99,18 +99,22 @@ func calculateNetStatDiffFromLastRecord(statsMap *map[string]*ResourceStats) {
 			statsMapRef[serviceName].NetStat.SentKB = 0
 			statsMapRef[serviceName].NetStat.RecvKB = 0
 		} else {
-			if stats.NetStat.SentKB < serviceLastNetStats[serviceName].SentKB {
+			oldSentKB := serviceLastNetStats[serviceName].SentKB
+			oldRecvKB := serviceLastNetStats[serviceName].RecvKB
+			currentSentKB := stats.NetStat.SentKB
+			currentRecvKB := stats.NetStat.RecvKB
+			if currentSentKB < oldSentKB {
 				statsMapRef[serviceName].NetStat.SentKB = 0
 			} else {
-				statsMapRef[serviceName].NetStat.SentKB = stats.NetStat.SentKB - serviceLastNetStats[serviceName].SentKB
+				statsMapRef[serviceName].NetStat.SentKB = currentSentKB-oldSentKB
 			}
-			if stats.NetStat.RecvKB < serviceLastNetStats[serviceName].RecvKB {
+			if currentRecvKB < oldRecvKB {
 				statsMapRef[serviceName].NetStat.RecvKB = 0
 			} else {
-				statsMapRef[serviceName].NetStat.RecvKB = stats.NetStat.RecvKB - serviceLastNetStats[serviceName].RecvKB
+				statsMapRef[serviceName].NetStat.RecvKB = currentRecvKB-oldRecvKB
 			}
-			serviceLastNetStats[serviceName].SentKB = statsMapRef[serviceName].NetStat.SentKB
-			serviceLastNetStats[serviceName].RecvKB = statsMapRef[serviceName].NetStat.RecvKB
+			serviceLastNetStats[serviceName].SentKB = currentSentKB
+			serviceLastNetStats[serviceName].RecvKB = currentRecvKB
 		}
 	}
 }
