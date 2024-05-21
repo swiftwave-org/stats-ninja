@@ -1,9 +1,10 @@
 package service
 
 type ResourceStats struct {
-	CpuUsagePercent uint8   `json:"cpu_used_percent"`
-	UsedMemoryMB    uint64  `json:"used_memory_mb"`
-	NetStat         NetStat `json:"network"`
+	ServiceCpuTime uint64   `json:"service_cpu_time"`
+	SystemCpuTime  uint64   `json:"system_cpu_time"`
+	UsedMemoryMB   uint64   `json:"used_memory_mb"`
+	NetStat        *NetStat `json:"network"`
 }
 
 type NetStat struct {

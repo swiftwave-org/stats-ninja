@@ -49,9 +49,10 @@ func Stats(cl *client.Client) (*map[string]*ResourceStats, error) {
 		// create a new ResourceStats if it doesn't exist
 		if _, ok := statsMap[serviceName]; !ok {
 			statsMap[serviceName] = &ResourceStats{
-				CpuUsagePercent: 0,
-				UsedMemoryMB:    0,
-				NetStat: NetStat{
+				ServiceCpuTime: 0,
+				SystemCpuTime:  0,
+				UsedMemoryMB:   0,
+				NetStat: &NetStat{
 					SentKB: 0,
 					RecvKB: 0,
 				},
@@ -72,7 +73,8 @@ func Stats(cl *client.Client) (*map[string]*ResourceStats, error) {
 		}
 
 		// save the stats
-		rs.CpuUsagePercent = rs.CpuUsagePercent + calculateCPUPercentUnix(&statsJSON)
+		rs.ServiceCpuTime = rs.ServiceCpuTime + uint64(statsJSON.CPUStats.CPUUsage.TotalUsage-statsJSON.PreCPUStats.CPUUsage.TotalUsage)
+		rs.SystemCpuTime = uint64(statsJSON.CPUStats.SystemUsage - statsJSON.PreCPUStats.SystemUsage)
 		rs.UsedMemoryMB = rs.UsedMemoryMB + memoryUsageMB(&statsJSON)
 		rs.NetStat.SentKB = rs.NetStat.SentKB + networkSentKB(&statsJSON)
 		rs.NetStat.RecvKB = rs.NetStat.RecvKB + networkRecvKB(&statsJSON)
@@ -106,12 +108,12 @@ func calculateNetStatDiffFromLastRecord(statsMap *map[string]*ResourceStats) {
 			if currentSentKB < oldSentKB {
 				statsMapRef[serviceName].NetStat.SentKB = 0
 			} else {
-				statsMapRef[serviceName].NetStat.SentKB = currentSentKB-oldSentKB
+				statsMapRef[serviceName].NetStat.SentKB = currentSentKB - oldSentKB
 			}
 			if currentRecvKB < oldRecvKB {
 				statsMapRef[serviceName].NetStat.RecvKB = 0
 			} else {
-				statsMapRef[serviceName].NetStat.RecvKB = currentRecvKB-oldRecvKB
+				statsMapRef[serviceName].NetStat.RecvKB = currentRecvKB - oldRecvKB
 			}
 			serviceLastNetStats[serviceName].SentKB = currentSentKB
 			serviceLastNetStats[serviceName].RecvKB = currentRecvKB
