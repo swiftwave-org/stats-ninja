@@ -38,10 +38,16 @@ func Stats(cl *client.Client) (*map[string]*ResourceStats, error) {
 		// fetch stats
 		stats, err := cl.ContainerStats(context.Background(), c.ID, false)
 		if err != nil {
+			if stats.Body != nil {
+				_ = stats.Body.Close()
+			}
 			continue
 		}
 		// ignore standalone containers
 		if serviceName, ok := c.Labels["com.docker.swarm.service.name"]; !ok || serviceName == "" {
+			if stats.Body != nil {
+				_ = stats.Body.Close()
+			}
 			continue
 		}
 		// get service name
@@ -62,6 +68,9 @@ func Stats(cl *client.Client) (*map[string]*ResourceStats, error) {
 		rs := statsMap[serviceName]
 		// Read the content of rc into a byte slice
 		content, err := io.ReadAll(stats.Body)
+		if stats.Body != nil {
+			_ = stats.Body.Close()
+		}
 		if err != nil {
 			continue
 		}
