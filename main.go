@@ -182,17 +182,28 @@ func sendStats(submissionEndpoint string, authorizationHeaderVal string, jsonDat
 	if authorizationHeaderVal != "" {
 		req.Header.Set("Authorization", authorizationHeaderVal)
 	}
+
+	// create a client with custom transport
+	transport := &http.Transport{}
+	httpClient := &http.Client{
+		Transport: transport,
+	}
+
 	// send the request
-	httpClient := &http.Client{}
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		fmt.Println("Error sending stats to endpoint: ", err.Error())
-		fmt.Println("data tried to be sent: ", string(jsonData))
+		fmt.Println("Error sending stats to endpoint:", err)
+		fmt.Println("Data tried to be sent:", string(jsonData))
+		transport.CloseIdleConnections() // make sure connections are released even on error
 		return err
 	}
+
 	// close the response body
-	defer func(Body io.ReadCloser) {
-		_ = Body.Close()
-	}(resp.Body)
+	defer resp.Body.Close()
+
+	// close any idle connections after the request
+	transport.CloseIdleConnections()
+
 	return nil
 }
+
