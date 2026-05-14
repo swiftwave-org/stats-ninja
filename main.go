@@ -136,11 +136,17 @@ func disable() {
 }
 
 func run(submissionEndpoint, authorizationHeaderVal string) {
-	// create a new docker client
-	dockerClient, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		log.Println("Error creating docker client:")
-		panic(err)
+	// create a new docker client, retrying on failure so the service stays alive
+	// if the docker socket isn't available yet (e.g. docker not started, perms)
+	var dockerClient *client.Client
+	for {
+		var err error
+		dockerClient, err = client.NewClientWithOpts(client.FromEnv)
+		if err == nil {
+			break
+		}
+		log.Println("Error creating docker client, retrying in 30s:", err)
+		time.Sleep(30 * time.Second)
 	}
 	_, _ = host.Stats()                // intentionally called. just to initialize current network stats
 	_, _ = service.Stats(dockerClient) // intentionally called. just to initialize current service net stats
